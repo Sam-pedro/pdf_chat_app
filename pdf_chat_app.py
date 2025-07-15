@@ -1,16 +1,19 @@
 import streamlit as st
 import pdfplumber
-import openai
 from openai import OpenAI
 import os
 
-client = OpenAI(api_key=os.getenv("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))
+# --- Set up OpenAI client using new SDK ---
+client = OpenAI(api_key=os.getenv("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"))
 
-
+# --- Function to extract text from PDF ---
 def extract_pdf_text(uploaded_file):
     with pdfplumber.open(uploaded_file) as pdf:
-        return "\n".join(page.extract_text() for page in pdf.pages if page.extract_text())
+        return "\n".join(
+            page.extract_text() for page in pdf.pages if page.extract_text()
+        )
 
+# --- Function to ask question via OpenAI ---
 def ask_pdf_question(text, question):
     prompt = f"""
 Answer the question using only the content from the PDF below.
@@ -33,15 +36,14 @@ Question: {question}
     )
     return response.choices[0].message.content
 
-# --- Streamlit UI ---
+# --- Streamlit Interface ---
 st.title("📄 Chat with your PDF")
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
 if uploaded_file:
     with st.spinner("Reading PDF..."):
         pdf_text = extract_pdf_text(uploaded_file)
-
-    st.success("✅ PDF loaded. Ask a question!")
+    st.success("✅ PDF loaded. Ask your question!")
 
     question = st.text_input("What do you want to know?")
     if question:
