@@ -48,7 +48,7 @@ response = client.chat.completions.create(
         temperature=0.2,
         max_tokens=600
     )
-    return response.choices[0].message.content
+return response.choices[0].message.content
 
 # --- Streamlit App UI ---
 st.title("📄 Chat with your PDF")
