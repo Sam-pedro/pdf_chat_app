@@ -64,4 +64,5 @@ if uploaded_file:
     if question:
         with st.spinner("Thinking…"):
             answer = ask_pdf_question(pdf_text, question)
-        st.markdown(f"**Answer:**  \n{answer}")
+        st.markdown(f"**Answer:**  
+{answer}")
