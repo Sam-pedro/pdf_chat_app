@@ -4,7 +4,7 @@ from openai import OpenAI
 import os
 
 # --- Set up OpenAI client using new SDK ---
-client = OpenAI(api_key=os.getenv("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"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- Function to extract text from PDF ---
 def extract_pdf_text(uploaded_file):
