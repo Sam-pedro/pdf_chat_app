@@ -22,24 +22,21 @@ def extract_pdf_text(uploaded_file):
     """
     with pdfplumber.open(uploaded_file) as pdf:
         pages = [page.extract_text() or "" for page in pdf.pages]
-    return "\n".join(pages).strip()
+    return "\n".join(pages)
 
 # --- Function to ask a question to the PDF content via OpenAI ---
 def ask_pdf_question(text, question):
     """
     Sends the PDF text and user's question to OpenAI and returns the response.
     """
-    prompt = f"""
-Answer the question using only the content from the PDF below.
+    # Build prompt combining PDF content and user question
+    prompt = (
+        "Answer the question using only the content from the PDF below.\n\n"
+        f"PDF Content:\n{text}\n\n"
+        f"Question: {question}"
+    )
 
-PDF Content:
-"""
-{text}
-"""
-
-Question: {question}
-"""
-response = client.chat.completions.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful assistant that only uses the provided PDF text."},
@@ -48,7 +45,7 @@ response = client.chat.completions.create(
         temperature=0.2,
         max_tokens=600
     )
-return response.choices[0].message.content
+    return response.choices[0].message.content.strip()
 
 # --- Streamlit App UI ---
 st.title("📄 Chat with your PDF")
@@ -64,5 +61,5 @@ if uploaded_file:
     if question:
         with st.spinner("Thinking…"):
             answer = ask_pdf_question(pdf_text, question)
-        st.markdown(f"**Answer:**  
-{answer}")
+        # Display the answer
+        st.markdown(f"**Answer:**\n\n{answer}")
