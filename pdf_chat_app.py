@@ -1,19 +1,42 @@
 import streamlit as st
 import pdfplumber
-from openai import OpenAI
 import os
+from openai import OpenAI
 
-# --- Set up OpenAI client using new SDK ---
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# —————————————————————
+# 1) API-KEY HANDLING
+# —————————————————————
 
-# --- Function to extract text from PDF ---
+# First try the environment (secrets)
+api_key = os.getenv("OPENAI_API_KEY")
+
+# If not found, prompt the user with a password field
+if not api_key:
+    st.warning("🔑 Enter your OpenAI API Key below to get started.")
+    api_key = st.text_input("OpenAI API Key", type="password")
+
+# If we still don’t have a key, stop here
+if not api_key:
+    st.stop()
+
+# Initialize the client
+client = OpenAI(api_key=api_key)
+
+# —————————————————————
+# 2) PDF TEXT EXTRACTION
+# —————————————————————
+
 def extract_pdf_text(uploaded_file):
     with pdfplumber.open(uploaded_file) as pdf:
         return "\n".join(
-            page.extract_text() for page in pdf.pages if page.extract_text()
-        )
+            page.extract_text() or "" 
+            for page in pdf.pages
+        ).strip()
 
-# --- Function to ask question via OpenAI ---
+# —————————————————————
+# 3) ASKING GPT
+# —————————————————————
+
 def ask_pdf_question(text, question):
     prompt = f"""
 Answer the question using only the content from the PDF below.
@@ -25,28 +48,33 @@ PDF Content:
 
 Question: {question}
 """
-    response = client.chat.completions.create(
+    resp = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful assistant that only uses the provided PDF text."},
-            {"role": "user", "content": prompt}
+            {"role": "user",   "content": prompt}
         ],
         temperature=0.2,
         max_tokens=600
     )
-    return response.choices[0].message.content
+    return resp.choices[0].message.content
 
-# --- Streamlit Interface ---
+# —————————————————————
+# 4) STREAMLIT UI
+# —————————————————————
+
 st.title("📄 Chat with your PDF")
+
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
 if uploaded_file:
-    with st.spinner("Reading PDF..."):
+    with st.spinner("Reading PDF…"):
         pdf_text = extract_pdf_text(uploaded_file)
-    st.success("✅ PDF loaded. Ask your question!")
+    st.success("✅ PDF loaded! Ask away below.")
 
-    question = st.text_input("What do you want to know?")
+    question = st.text_input("What do you want to know about the document?")
     if question:
-        with st.spinner("Thinking..."):
+        with st.spinner("Thinking…"):
             answer = ask_pdf_question(pdf_text, question)
-            st.markdown(f"**Answer:**\n{answer}")
+        st.markdown(f"**Answer:**  \n{answer}")
+
